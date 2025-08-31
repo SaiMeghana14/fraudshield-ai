@@ -131,6 +131,7 @@ elif selected == "📊 Trading Fraud Detection":
     st.dataframe(df.head())
 
     with st.spinner("🔍 Analyzing trade patterns..."):
+        st.write("Columns in dataset:", df.columns.tolist())
         anomalies = detect_anomalies(df)
         time.sleep(2)
     st.success("Analysis Complete ✅")
