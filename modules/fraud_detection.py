@@ -1,29 +1,27 @@
-import pandas as pd
 import re
-
-# -------------------- Trade Anomaly Detection --------------------
+import pandas as pd
 
 def detect_anomalies(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Detect anomalies in stock trades based on abnormal quantities and price deviations.
-    Returns a subset of the DataFrame containing flagged anomalies.
+    Detect anomalies in stock trades based on abnormal amount values.
+    Works with datasets containing 'amount' column.
     """
 
-    required_cols = ["Quantity", "Price"]
-    missing = [col for col in required_cols if col not in df.columns]
-
-    # If required columns not found, return empty DataFrame with a message
-    if missing:
-        return pd.DataFrame({"error": [f"Missing columns: {', '.join(missing)}"]})
+    # If 'amount' column missing, return empty with error message
+    if "amount" not in df.columns:
+        return pd.DataFrame({"error": ["Missing 'amount' column in dataset"]})
 
     anomalies = []
 
+    mean_amount = df["amount"].mean()
+    std_amount = df["amount"].std()
+
     for idx, row in df.iterrows():
-        # Flag trade if quantity is abnormally high
-        if row["Quantity"] > df["Quantity"].mean() * 5:
+        # flag trade if amount is abnormally high
+        if row["amount"] > mean_amount * 5:
             anomalies.append(idx)
-        # Flag trade if price deviates drastically
-        elif abs(row["Price"] - df["Price"].mean()) > 3 * df["Price"].std():
+        # flag trade if amount deviates drastically
+        elif abs(row["amount"] - mean_amount) > 3 * std_amount:
             anomalies.append(idx)
 
     return df.loc[anomalies]
