@@ -3,28 +3,71 @@ import pandas as pd
 
 def detect_anomalies(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Detect anomalies in stock trades based on abnormal amount values.
-    Works with datasets containing 'amount' column.
+    Universal anomaly detector that supports different dataset schemas.
+    - Looks for numeric columns in order: 'amount' -> 'Quantity' -> 'Price'
+    - Flags rows where value > mean * 5 OR abs(value-mean) > 3*std
+    - Also includes rows with is_fraud == 1 (if present)
+    - Returns flagged rows (duplicates removed). Never raises KeyError.
     """
+    # handle empty input
+    if df is None or df.empty:
+        return pd.DataFrame(columns=df.columns if df is not None else [])
 
-    # If 'amount' column missing, return empty with error message
-    if "amount" not in df.columns:
-        return pd.DataFrame({"error": ["Missing 'amount' column in dataset"]})
+    # normalize column name lookup: map lowercase -> actual name
+    col_map = {c.strip().lower(): c for c in df.columns}
 
-    anomalies = []
+    # choose numeric columns to examine (prefer amount, then quantity, then price)
+    numeric_cols = []
+    if 'amount' in col_map:
+        numeric_cols.append(col_map['amount'])
+    if 'quantity' in col_map and col_map['quantity'] not in numeric_cols:
+        numeric_cols.append(col_map['quantity'])
+    if 'price' in col_map and col_map['price'] not in numeric_cols:
+        numeric_cols.append(col_map['price'])
 
-    mean_amount = df["amount"].mean()
-    std_amount = df["amount"].std()
+    # if no numeric column found, but `is_fraud` exists, use that to return flagged rows
+    if not numeric_cols and 'is_fraud' in df.columns:
+        try:
+            return df[df['is_fraud'].astype(int) == 1].copy()
+        except Exception:
+            return pd.DataFrame(columns=df.columns)
 
-    for idx, row in df.iterrows():
-        # flag trade if amount is abnormally high
-        if row["amount"] > mean_amount * 5:
-            anomalies.append(idx)
-        # flag trade if amount deviates drastically
-        elif abs(row["amount"] - mean_amount) > 3 * std_amount:
-            anomalies.append(idx)
+    if not numeric_cols:
+        # no useful numeric columns — warn and return empty set
+        st.warning("No numeric columns found for anomaly detection (expected 'amount' or 'Quantity' or 'Price').")
+        return pd.DataFrame(columns=df.columns)
 
-    return df.loc[anomalies]
+    # coerce numeric columns to numbers safely
+    for c in numeric_cols:
+        df[c] = pd.to_numeric(df[c], errors='coerce')
+
+    mask = pd.Series(False, index=df.index)
+
+    # flag anomalies per numeric column
+    for c in numeric_cols:
+        s = df[c]
+        mean = s.mean(skipna=True)
+        std = s.std(skipna=True)
+
+        # skip if we can't compute stats
+        if pd.isna(mean) or pd.isna(std) or std == 0:
+            continue
+
+        mask |= s > mean * 5
+        mask |= (s - mean).abs() > 3 * std
+
+    # include explicit is_fraud column if present
+    if 'is_fraud' in df.columns:
+        try:
+            mask |= df['is_fraud'].astype(int) == 1
+        except Exception:
+            # if conversion fails, ignore it
+            pass
+
+    anomalies = df[mask].copy()
+    anomalies = anomalies.drop_duplicates()
+
+    return anomalies
 
 
 # -------------------- Fraud Detection --------------------
