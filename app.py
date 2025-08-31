@@ -76,6 +76,21 @@ def plot_price_anomalies(df, anomalies):
     fig.update_layout(title="📉 Price Trends & Anomalies")
     st.plotly_chart(fig, use_container_width=True)
 
+# -------------------- EXTRA FRAUD CHARTS --------------------
+def plot_fraud_rate(df, anomalies):
+    fraud_rate = len(anomalies) / len(df) * 100 if len(df) > 0 else 0
+    st.metric("📊 Fraud Rate", f"{fraud_rate:.2f}%")
+
+def plot_fraud_by_location(df):
+    if "Location" in df.columns:
+        fig = px.histogram(df, x="Location", title="🌍 Fraud by Location", color="Location")
+        st.plotly_chart(fig, use_container_width=True)
+
+def plot_amount_distribution(df):
+    if "Amount" in df.columns:
+        fig = px.histogram(df, x="Amount", nbins=30, title="💰 Transaction Amount Distribution")
+        st.plotly_chart(fig, use_container_width=True)
+
 # -------------------- REPORT --------------------
 def generate_report():
     st.markdown("""
@@ -129,6 +144,12 @@ elif selected == "📊 Trading Fraud Detection":
     st.subheader("📉 Fraud Detection Visuals")
     plot_trade_volume(df)
     plot_price_anomalies(df, anomalies)
+
+    # NEW FRAUD CHARTS
+    st.subheader("📊 Fraud Insights")
+    plot_fraud_rate(df, anomalies)
+    plot_fraud_by_location(anomalies)
+    plot_amount_distribution(anomalies)
 
 # -------------------- INVESTOR FRAUDSHIELD --------------------
 elif selected == "📱 Investor FraudShield":
