@@ -1,0 +1,8 @@
+streamlit
+streamlit-option-menu
+streamlit-lottie
+pandas
+scikit-learn
+matplotlib
+transformers
+torch
