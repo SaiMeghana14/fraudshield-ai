@@ -1,28 +1,33 @@
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline
-import joblib
+from sklearn.naive_bayes import MultinomialNB
 
-# Load dataset
-data = pd.read_csv("data/phishing_samples.csv")
+def load_phishing_data(path="data/phishing_samples.csv"):
+    df = pd.read_csv(path)
 
-# Train a simple text classifier
-X, y = data["message"], data["label"]
-pipeline = Pipeline([
-    ("tfidf", TfidfVectorizer(stop_words="english")),
-    ("clf", LogisticRegression())
-])
-pipeline.fit(X, y)
+    # Normalize column names just in case
+    df.columns = df.columns.str.strip().str.lower()
 
-# Save model for reusability
-joblib.dump(pipeline, "modules/scam_model.pkl")
+    # Ensure correct columns exist
+    if "message" not in df.columns or "label" not in df.columns:
+        raise ValueError("phishing_samples.csv must contain 'message' and 'label' columns.")
 
-def detect_scam(text: str):
-    if not text.strip():
-        return {"label": "safe", "score": 0.0}
+    return df
 
-    model = joblib.load("modules/scam_model.pkl")
-    prob = model.predict_proba([text])[0]
-    label = "scam" if prob[1] > 0.5 else "safe"
-    return {"label": label, "score": float(max(prob))}
+def train_scam_model(path="data/phishing_samples.csv"):
+    df = load_phishing_data(path)
+
+    X = df["message"]
+    y = df["label"]
+
+    vectorizer = TfidfVectorizer(stop_words="english")
+    X_vec = vectorizer.fit_transform(X)
+
+    model = MultinomialNB()
+    model.fit(X_vec, y)
+
+    return model, vectorizer
+
+def predict_scam(text, model, vectorizer):
+    X_test = vectorizer.transform([text])
+    return model.predict(X_test)[0]
