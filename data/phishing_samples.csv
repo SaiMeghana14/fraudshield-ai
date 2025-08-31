@@ -1,11 +1,11 @@
-message_id	message	label
-1	Get guaranteed returns in 1 week, invest now!	phishing
-2	Your Demat account will be blocked, click here to verify.	phishing
-3	SEBI approved stock tips: double your money today.	phishing
-4	Transfer money to this account to avoid penalty.	phishing
-5	Congratulations! You have won a free stock trading course.	phishing
-6	Urgent! Update KYC immediately to continue trading.	phishing
-7	Exclusive insider news: Stock XYZ will skyrocket.	phishing
-8	Limited time offer: Pay now and get free brokerage.	phishing
-9	Dear investor, confirm your PAN at this link to avoid suspension.	phishing
-10	Huge profits await, join our premium WhatsApp group now.	phishing
+message,label
+"Your account is locked, click here to reset password",phishing
+"Congratulations! You've won a lottery worth $1,000,000",phishing
+"Reminder: Your SIP in Mutual Fund is due tomorrow",safe
+"SEBI Alert: Check your registered email for KYC compliance",safe
+"Urgent: Verify your bank account immediately",phishing
+"Your dividend payout has been credited",safe
+"Verify your PAN card details now or account will be suspended",phishing
+"Investment update: Nifty closed higher today",safe
+"Lottery: Claim your free iPhone now by clicking this link",phishing
+"Your tax refund has been processed successfully",safe
