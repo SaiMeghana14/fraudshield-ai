@@ -1,4 +1,3 @@
-
 import pandas as pd
 import re
 
@@ -9,6 +8,14 @@ def detect_anomalies(df: pd.DataFrame) -> pd.DataFrame:
     Detect anomalies in stock trades based on abnormal quantities and price deviations.
     Returns a subset of the DataFrame containing flagged anomalies.
     """
+
+    required_cols = ["Quantity", "Price"]
+    missing = [col for col in required_cols if col not in df.columns]
+
+    # If required columns not found, return empty DataFrame with a message
+    if missing:
+        return pd.DataFrame({"error": [f"Missing columns: {', '.join(missing)}"]})
+
     anomalies = []
 
     for idx, row in df.iterrows():
