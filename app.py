@@ -32,9 +32,25 @@ def load_phishing():
 
 # -------------------- FRAUD DETECTION --------------------
 def detect_anomalies(df):
-    anomalies = df[(df["Quantity"] > df["Quantity"].mean() * 3) |
-                   (df["Price"].pct_change().abs() > 0.2)]
-    return anomalies
+    anomalies = pd.DataFrame()
+
+    # normalize column names
+    df.columns = [c.lower() for c in df.columns]
+
+    # numeric anomaly detection
+    numeric_cols = df.select_dtypes(include=["int64", "float64"]).columns
+    for col in numeric_cols:
+        threshold = df[col].mean() + 3 * df[col].std()
+        col_anomalies = df[df[col] > threshold]
+        if not col_anomalies.empty:
+            anomalies = pd.concat([anomalies, col_anomalies])
+
+    # if "price" exists, check pct_change anomalies
+    if "price" in df.columns:
+        price_anoms = df[df["price"].pct_change().abs() > 0.2]
+        anomalies = pd.concat([anomalies, price_anoms])
+
+    return anomalies.drop_duplicates()
 
 # -------------------- SCAM DETECTOR --------------------
 @st.cache_resource
@@ -56,25 +72,27 @@ model, vectorizer = train_scam_model()
 def detect_scam(message):
     X_test = vectorizer.transform([message])
     y_pred = model.predict(X_test)[0]
-    y_prob = model.predict_proba(X_test).max()
+    y_prob = model.predict_proba(X_test)[0, model.classes_.tolist().index(y_pred)]
     return {"label": y_pred, "score": y_prob}
 
 # -------------------- VISUALIZATIONS --------------------
 def plot_trade_volume(df):
-    fig = px.bar(df, x="Stock", y="Quantity", color="Stock", title="📊 Trade Volume per Stock")
-    st.plotly_chart(fig, use_container_width=True)
+    if "stock" in df.columns and "amount" in df.columns:
+        fig = px.bar(df, x="stock", y="amount", color="stock", title="📊 Trade Volume per Stock")
+        st.plotly_chart(fig, use_container_width=True)
 
 def plot_price_anomalies(df, anomalies):
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=df.index, y=df["Price"], mode="lines+markers", name="Price"))
-    if not anomalies.empty:
-        fig.add_trace(go.Scatter(
-            x=anomalies.index, y=anomalies["Price"],
-            mode="markers", marker=dict(color="red", size=12),
-            name="Anomalies 🚨"
-        ))
-    fig.update_layout(title="📉 Price Trends & Anomalies")
-    st.plotly_chart(fig, use_container_width=True)
+    if "price" in df.columns:
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=df.index, y=df["price"], mode="lines+markers", name="Price"))
+        if not anomalies.empty and "price" in anomalies.columns:
+            fig.add_trace(go.Scatter(
+                x=anomalies.index, y=anomalies["price"],
+                mode="markers", marker=dict(color="red", size=12),
+                name="Anomalies 🚨"
+            ))
+        fig.update_layout(title="📉 Price Trends & Anomalies")
+        st.plotly_chart(fig, use_container_width=True)
 
 # -------------------- EXTRA FRAUD CHARTS --------------------
 def plot_fraud_rate(df, anomalies):
@@ -82,13 +100,13 @@ def plot_fraud_rate(df, anomalies):
     st.metric("📊 Fraud Rate", f"{fraud_rate:.2f}%")
 
 def plot_fraud_by_location(df):
-    if "Location" in df.columns:
-        fig = px.histogram(df, x="Location", title="🌍 Fraud by Location", color="Location")
+    if "location" in df.columns:
+        fig = px.histogram(df, x="location", title="🌍 Fraud by Location", color="location")
         st.plotly_chart(fig, use_container_width=True)
 
 def plot_amount_distribution(df):
-    if "Amount" in df.columns:
-        fig = px.histogram(df, x="Amount", nbins=30, title="💰 Transaction Amount Distribution")
+    if "amount" in df.columns:
+        fig = px.histogram(df, x="amount", nbins=30, title="💰 Transaction Amount Distribution")
         st.plotly_chart(fig, use_container_width=True)
 
 # -------------------- REPORT --------------------
@@ -128,6 +146,9 @@ elif selected == "📊 Trading Fraud Detection":
     else:
         df = load_trades()
 
+    # normalize column names for consistency
+    df.columns = [c.lower() for c in df.columns]
+
     st.dataframe(df.head())
 
     with st.spinner("🔍 Analyzing trade patterns..."):
@@ -157,11 +178,15 @@ elif selected == "📱 Investor FraudShield":
     st.header("📱 Investor FraudShield – Scam Message Detector")
     user_msg = st.text_area("Paste SMS/Email content here:")
     if st.button("Check Fraud Risk"):
+    if not user_msg.strip():
+        st.warning("⚠️ Please enter a message first.")
+    else:
         result = detect_scam(user_msg)
-        if result["label"] == "scam":
-            st.error(f"🚨 Scam Detected! Confidence: {result['score']:.2f}")
-        else:
-            st.success(f"✅ Looks Safe (Confidence: {result['score']:.2f})")
+        
+    if result == detect_scam(user_msg):
+        st.error(f"🚨 Scam Detected! Confidence: {result['score']:.2f}")
+    else:
+        st.success(f"✅ Looks Safe (Confidence: {result['score']:.2f})")
 
     st.subheader("📋 Sample Scam Messages")
     scam_samples = load_phishing()
@@ -171,4 +196,9 @@ elif selected == "📱 Investor FraudShield":
 elif selected == "📈 Reports":
     st.header("📈 Market Fraud Analysis Report")
     generate_report()
-    st.download_button("⬇️ Download Report", "Automated Fraud Report Generated.")
+    st.download_button(
+    label="⬇️ Download Report",
+    data="Automated Fraud Report Generated.",
+    file_name="fraud_report.txt"
+)
+
