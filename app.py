@@ -177,20 +177,22 @@ elif selected == "📊 Trading Fraud Detection":
 elif selected == "📱 Investor FraudShield":
     st.header("📱 Investor FraudShield – Scam Message Detector")
     user_msg = st.text_area("Paste SMS/Email content here:")
+
     if st.button("Check Fraud Risk"):
         if not user_msg.strip():
             st.warning("⚠️ Please enter a message first.")
         else:
-            result = detect_scam(user_msg)
-        
-    if result == detect_scam(user_msg):
-        st.error(f"🚨 Scam Detected! Confidence: {result['score']:.2f}")
-    else:
-        st.success(f"✅ Looks Safe (Confidence: {result['score']:.2f})")
+            result = detect_scam(user_msg)  # call only once
+
+            if result and result.get("score", 0) > 0.5:  # threshold example
+                st.error(f"🚨 Scam Detected! Confidence: {result['score']:.2f}")
+            else:
+                st.success(f"✅ Looks Safe (Confidence: {result['score']:.2f})")
 
     st.subheader("📋 Sample Scam Messages")
     scam_samples = load_phishing()
     st.table(scam_samples.head())
+
 
 # -------------------- REPORT --------------------
 elif selected == "📈 Reports":
