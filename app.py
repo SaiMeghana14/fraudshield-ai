@@ -297,6 +297,8 @@ elif selected == "📊 Trading Fraud Detection":
 
     st.subheader("📊 Fraud Insights")
     plot_fraud_rate(df, anomalies)
+    plot_fraud_vs_safe(df)
+    plot_fraud_trend(df)
     plot_fraud_by_location(df)
     plot_amount_distribution(df)
     plot_top_suspicious_traders(df)
