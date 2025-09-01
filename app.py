@@ -197,11 +197,11 @@ if selected == "🏠 Home":
     with colA:
         if st.button("📊 Try Anomaly Detector"):
             st.session_state["menu_option"] = "📊 Trade Anomalies"
-            st.experimental_rerun()
+            st.rerun()
     with colB:
         if st.button("📱 Check Scam Messages"):
             st.session_state["menu_option"] = "📱 Investor FraudShield"
-            st.experimental_rerun()
+            st.rerun()
 
     # --- Live Fraud Tips ---
     st.subheader("📢 Today’s Fraud Prevention Tip")
