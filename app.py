@@ -34,6 +34,11 @@ def load_trades():
 def load_phishing():
     return pd.read_csv("data/phishing_samples.csv")
 
+st.subheader("🔎 Dataset Preview")
+st.write(df.head())   # show first 5 rows
+st.write("📑 Columns in dataset:", list(df.columns))
+
+
 # -------------------- FRAUD DETECTION --------------------
 def detect_anomalies(df):
     anomalies = pd.DataFrame()
