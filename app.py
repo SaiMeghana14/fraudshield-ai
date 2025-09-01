@@ -123,6 +123,21 @@ def plot_fraud_rate(df, anomalies):
     fraud_rate = len(anomalies) / len(df) * 100 if len(df) > 0 else 0
     st.metric("📊 Fraud Rate", f"{fraud_rate:.2f}%")
 
+    # Fraud vs Safe Pie Chart
+    if "Fraudulent" in df.columns:
+        fraud_counts = df["Fraudulent"].value_counts()
+        fig = px.pie(values=fraud_counts.values, names=["Safe", "Fraud"],
+                     title="Fraud vs Safe Trades", hole=0.4,
+                     color_discrete_sequence=px.colors.sequential.RdBu)
+        st.plotly_chart(fig, use_container_width=True)
+
+    # Fraud trend over time
+    if "date" in df.columns:
+        fraud_rate_over_time = df.groupby("date")["Fraudulent"].mean() * 100
+        fig = px.line(fraud_rate_over_time, title="📈 Fraud Rate Over Time",
+                      labels={"value": "Fraud Rate (%)", "date": "Date"})
+        st.plotly_chart(fig, use_container_width=True)
+
 def plot_fraud_by_location(df):
     if "location" in df.columns:
         fig = px.histogram(df, x="location", title="🌍 Fraud by Location", color="location")
@@ -132,6 +147,21 @@ def plot_amount_distribution(df):
     if "amount" in df.columns:
         fig = px.histogram(df, x="amount", nbins=30, title="💰 Transaction Amount Distribution")
         st.plotly_chart(fig, use_container_width=True)
+
+def plot_top_suspicious_traders(df):
+    if "Fraudulent" in df.columns and "TraderID" in df.columns:
+        top_traders = df[df["Fraudulent"] == 1]["TraderID"].value_counts().head(5)
+        if not top_traders.empty:
+            st.write("🚨 Top Suspicious Traders:")
+            st.bar_chart(top_traders)
+
+def plot_fraud_heatmap(df):
+    if "Sector" in df.columns and "Fraudulent" in df.columns:
+        fig = px.density_heatmap(df, x="Sector", y="Fraudulent",
+                                 title="🔥 Fraud Density by Sector",
+                                 color_continuous_scale="Reds")
+        st.plotly_chart(fig, use_container_width=True)
+
 
 # Scam Trends
 def scam_trends():
