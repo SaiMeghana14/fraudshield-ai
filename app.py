@@ -241,13 +241,23 @@ if selected == "🏠 Home":
     # --- Interactive Buttons ---
     st.subheader("🚀 Quick Actions")
     colA, colB = st.columns(2)
+    
     with colA:
         if st.button("📊 Try Anomaly Detector"):
+            # Switch to anomaly detection page
             st.session_state["menu_option"] = "📊 Trade Anomalies"
+            # Call your anomaly detection logic directly if you want instant results
+            from modules.trade_anomalies import show_anomaly_detector
+            show_anomaly_detector()
             st.rerun()
+    
     with colB:
         if st.button("📱 Check Scam Messages"):
+            # Switch to scam message detection page
             st.session_state["menu_option"] = "📱 Investor FraudShield"
+            # Call scam message checker logic instantly
+            from modules.scam_messages import show_scam_checker
+            show_scam_checker()
             st.rerun()
 
     # --- Live Fraud Tips ---
