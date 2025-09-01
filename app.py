@@ -280,8 +280,10 @@ elif selected == "📊 Trading Fraud Detection":
 
     st.subheader("📊 Fraud Insights")
     plot_fraud_rate(df, anomalies)
-    plot_fraud_by_location(anomalies)
-    plot_amount_distribution(anomalies)
+    plot_fraud_by_location(df)
+    plot_amount_distribution(df)
+    plot_top_suspicious_traders(df)
+    plot_fraud_heatmap(df)
 
 # -------------------- INVESTOR FRAUDSHIELD --------------------
 elif selected == "📱 Investor FraudShield":
