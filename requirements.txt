@@ -9,3 +9,4 @@ torch
 plotly
 joblib
 reportlab
+langdetect
