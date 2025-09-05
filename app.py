@@ -212,14 +212,20 @@ def generate_report():
     st.success("✅ Report Generated")
 
 # -------------------- SIDEBAR NAV --------------------
+if "selected_page" not in st.session_state:
+    st.session_state["selected_page"] = "🏠 Home"
+
 with st.sidebar:
     selected = option_menu(
         "FraudShield AI",
         ["🏠 Home", "📊 Trading Fraud Detection", "📱 Investor FraudShield", "📈 Reports"],
         icons=["house", "graph-up", "shield-check", "file-earmark-text"],
         menu_icon="cast",
-        default_index=0
+        default_index=["🏠 Home", "📊 Trading Fraud Detection", "📱 Investor FraudShield", "📈 Reports"].index(st.session_state["selected_page"])
     )
+
+# keep sidebar and session state in sync
+st.session_state["selected_page"] = selected
 
 # -------------------- HOME --------------------
 if selected == "🏠 Home":
@@ -244,20 +250,12 @@ if selected == "🏠 Home":
     
     with colA:
         if st.button("📊 Try Anomaly Detector"):
-            # Switch to anomaly detection page
-            st.session_state["menu_option"] = "📊 Trade Anomalies"
-            # Call your anomaly detection logic directly if you want instant results
-            from modules.trade_anomalies import show_anomaly_detector
-            show_anomaly_detector()
+            st.session_state["selected_page"] = "📊 Trading Fraud Detection"
             st.rerun()
     
     with colB:
         if st.button("📱 Check Scam Messages"):
-            # Switch to scam message detection page
-            st.session_state["menu_option"] = "📱 Investor FraudShield"
-            # Call scam message checker logic instantly
-            from modules.scam_messages import show_scam_checker
-            show_scam_checker()
+            st.session_state["selected_page"] = "📱 Investor FraudShield"
             st.rerun()
 
     # --- Live Fraud Tips ---
