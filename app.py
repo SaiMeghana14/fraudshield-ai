@@ -1,4 +1,3 @@
-# Full updated app.py — extends your app with real market data + dashboards + community & engagement features
 import streamlit as st  
 from streamlit_option_menu import option_menu
 import pandas as pd
@@ -326,6 +325,42 @@ def scam_network():
     buf.seek(0)
     st.image(buf)
     plt.close()
+
+# -------------------- REPORT HELPERS --------------------
+def generate_report():
+    st.markdown("""
+    ### 📈 Market Fraud Analysis Report
+    - Detected anomalies in trading volumes & prices  
+    - Scam message classifier trained on phishing samples  
+    - Real-time investor safety tools  
+    """)
+    st.success("✅ Report Generated")
+
+def download_report_files(df):
+    import io
+    from openpyxl import Workbook  # make sure openpyxl is installed in requirements.txt
+
+    # Save to Excel
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="fraud_report")
+    excel_data = output.getvalue()
+
+    st.download_button(
+        label="⬇️ Download Report (Excel)",
+        data=excel_data,
+        file_name="fraud_report.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    # Save to CSV
+    csv_data = df.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="⬇️ Download Report (CSV)",
+        data=csv_data,
+        file_name="fraud_report.csv",
+        mime="text/csv"
+    )
 
 # -------------------- COMMUNITY REPORTING (persist to CSV) --------------------
 REPORTS_PATH = "data/reports.csv"
