@@ -464,6 +464,14 @@ with st.sidebar:
     av_key_sidebar = st.text_input("Alpha Vantage API Key (optional)", type="password")
     live_updates = st.checkbox("Enable simulated push alerts", value=False)
     st.sidebar.markdown("## 🖥️ FraudShield AI")
+    st.markdown("""
+    <style>
+    /* Hide option_menu default arrow/icon */
+    [data-testid="stSidebar"] svg {
+        display: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
     selected = option_menu(
     None,
     ["🏠 Home",
