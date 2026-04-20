@@ -464,6 +464,41 @@ with st.sidebar:
     av_key_sidebar = st.text_input("Alpha Vantage API Key (optional)", type="password")
     live_updates = st.checkbox("Enable simulated push alerts", value=False)
     st.sidebar.markdown("## 🖥️ FraudShield AI")
+    st.markdown("""
+    <style>
+    
+    /* Hide radio circles */
+    div[role="radiogroup"] label div:first-child {
+        display:none !important;
+    }
+    
+    /* Menu item styling */
+    div[role="radiogroup"] label {
+        display:block;
+        padding:12px 16px;
+        margin-bottom:10px;
+        border-radius:12px;
+        background:white;
+        font-weight:500;
+        transition:0.2s;
+    }
+    
+    /* Hover effect */
+    div[role="radiogroup"] label:hover {
+        background:#f3f4f6;
+    }
+    
+    /* Selected item (red highlight like before) */
+    div[role="radiogroup"] input:checked + div {
+        background:#ff5a5f !important;
+        color:white !important;
+        border-radius:12px;
+        padding:12px 16px;
+    }
+    
+    </style>
+    """, unsafe_allow_html=True)
+    
     selected = st.sidebar.radio(
     "",
     ["🏠 Home",
