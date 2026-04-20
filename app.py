@@ -450,8 +450,8 @@ if "selected_page" not in st.session_state:
 with st.sidebar:
     av_key_sidebar = st.text_input("Alpha Vantage API Key (optional)", type="password")
     live_updates = st.checkbox("Enable simulated push alerts", value=False)
+    st.sidebar.markdown("## 🖥️ FraudShield AI")
     selected = option_menu(
-        " 🖥️ FraudShield AI",
         ["🏠 Home", "📊 Trading Fraud Detection", "📱 Investor FraudShield", "📈 Reports"],
         icons=["house", "graph-up", "shield-check", "file-earmark-text"], menu_icon="",
         default_index=["🏠 Home", "📊 Trading Fraud Detection", "📱 Investor FraudShield", "📈 Reports"].index(st.session_state["selected_page"])
