@@ -24,12 +24,47 @@ st.set_page_config(page_title="FraudShield AI", page_icon="🛡️", layout="wid
 # ------------------ ALPHA VANTAGE API ------------------
 
 api_key = st.secrets["ALPHA_VANTAGE_API_KEY"]
-
 url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=IBM&apikey={api_key}"
-
 data = requests.get(url).json()
 
-st.write(data)
+quote = data["Global Quote"]
+price = float(quote["05. price"])
+change_percent = float(quote["10. change percent"].replace("%",""))
+volume = int(quote["06. volume"])
+
+# ---------------- Surveillance Dashboard ----------------
+
+st.subheader("🛡 Market Surveillance Engine")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric("Price Change %", f"{change_percent}%")
+
+with col2:
+    st.metric("Volume", f"{volume:,}")
+
+with col3:
+    risk_score = 20
+
+    if change_percent > 5:
+        risk_score += 50
+
+    if volume > 10000000:
+        risk_score += 30
+
+    st.metric("Fraud Risk Score", f"{risk_score}/100")
+
+# -------- Alerts --------
+
+if risk_score >= 70:
+    st.error("🚨 High-Risk Alert: Possible Pump-and-Dump Activity")
+
+elif risk_score >= 40:
+    st.warning("⚠ Moderate Risk: Unusual Market Behavior Detected")
+
+else:
+    st.success("✅ Market Activity Normal")
 
 # -------------------- LOAD ANIMATION --------------------
 def load_lottie(path):
