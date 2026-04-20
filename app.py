@@ -454,7 +454,6 @@ with st.sidebar:
         " 🖥️ FraudShield AI",
         ["🏠 Home", "📊 Trading Fraud Detection", "📱 Investor FraudShield", "📈 Reports"],
         icons=["house", "graph-up", "shield-check", "file-earmark-text"],
-        menu_icon="cast",
         default_index=["🏠 Home", "📊 Trading Fraud Detection", "📱 Investor FraudShield", "📈 Reports"].index(st.session_state["selected_page"])
     )
 
