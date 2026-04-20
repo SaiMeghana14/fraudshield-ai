@@ -453,7 +453,7 @@ with st.sidebar:
     selected = option_menu(
         " 🖥️ FraudShield AI",
         ["🏠 Home", "📊 Trading Fraud Detection", "📱 Investor FraudShield", "📈 Reports"],
-        icons=["house", "graph-up", "shield-check", "file-earmark-text"],
+        icons=["house", "graph-up", "shield-check", "file-earmark-text"], menu_icon="",
         default_index=["🏠 Home", "📊 Trading Fraud Detection", "📱 Investor FraudShield", "📈 Reports"].index(st.session_state["selected_page"])
     )
 
