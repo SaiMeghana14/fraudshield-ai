@@ -464,26 +464,12 @@ with st.sidebar:
     av_key_sidebar = st.text_input("Alpha Vantage API Key (optional)", type="password")
     live_updates = st.checkbox("Enable simulated push alerts", value=False)
     st.sidebar.markdown("## 🖥️ FraudShield AI")
-    st.markdown("""
-    <style>
-    /* Hide option_menu default arrow/icon */
-    [data-testid="stSidebar"] svg {
-        display: none !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    selected = option_menu(
-    None,
+    selected = st.sidebar.radio(
+    "",
     ["🏠 Home",
      "📊 Trading Fraud Detection",
      "📱 Investor FraudShield",
-     "📈 Reports"],
-    default_index=[
-        "🏠 Home",
-        "📊 Trading Fraud Detection",
-        "📱 Investor FraudShield",
-        "📈 Reports"
-    ].index(st.session_state["selected_page"])
+     "📈 Reports"]
 )
 
 # keep sidebar and session state in sync
