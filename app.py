@@ -469,51 +469,51 @@ if selected == "🏠 Home":
     st.markdown("### Protecting Every Trade, Securing Every Investor.")
     st.info("An AI-powered platform for fraud detection & investor protection aligned with SEBI’s mandate.")
 
-# ---------------- Surveillance Dashboard ----------------
-
-st.subheader("🔍 Market Surveillance Engine")
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.metric("Price Change %", f"{change_percent}%")
-
-with col2:
-    st.metric("Volume", f"{volume:,}")
-
-with col3:
-    risk_score = 20
-
-    if change_percent > 5:
-        risk_score += 50
-
-    if volume > 10000000:
-        risk_score += 30
-
-    if risk_score <= 30:
-        risk_label = "Low 🟢"
-
-    elif risk_score <= 60:
-        risk_label = "Moderate 🟡"
+    # ---------------- Surveillance Dashboard ----------------
+    
+    st.subheader("🔍 Market Surveillance Engine")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric("Price Change %", f"{change_percent}%")
+    
+    with col2:
+        st.metric("Volume", f"{volume:,}")
+    
+    with col3:
+        risk_score = 20
+    
+        if change_percent > 5:
+            risk_score += 50
+    
+        if volume > 10000000:
+            risk_score += 30
+    
+        if risk_score <= 30:
+            risk_label = "Low 🟢"
+    
+        elif risk_score <= 60:
+            risk_label = "Moderate 🟡"
+        
+        else:
+            risk_label = "High 🔴"
+    
+        st.metric(
+            "Fraud Risk Score",
+            f"{risk_score}/100 ({risk_label})"
+        )
+    
+    # -------- Alerts --------
+    
+    if risk_score >= 70:
+        st.error("🚨 High-Risk Alert: Possible Pump-and-Dump Activity")
+    
+    elif risk_score >= 40:
+        st.warning("⚠ Moderate Risk: Unusual Market Behavior Detected")
     
     else:
-        risk_label = "High 🔴"
-
-    st.metric(
-        "Fraud Risk Score",
-        f"{risk_score}/100 ({risk_label})"
-    )
-
-# -------- Alerts --------
-
-if risk_score >= 70:
-    st.error("🚨 High-Risk Alert: Possible Pump-and-Dump Activity")
-
-elif risk_score >= 40:
-    st.warning("⚠ Moderate Risk: Unusual Market Behavior Detected")
-
-else:
-    st.success("✅ SEBI Surveillance Status: Normal")
+        st.success("✅ SEBI Surveillance Status: Normal")
 
     # --- Key Highlights ---
     st.subheader("✨ Why FraudShield AI?")
