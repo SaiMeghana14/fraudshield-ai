@@ -42,52 +42,6 @@ def load_lottie(path):
 
 fraud_anim = load_lottie("assets/animations/fraud.json")
 
-# ---------------- Surveillance Dashboard ----------------
-
-st.subheader("🔍 Market Surveillance Engine")
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.metric("Price Change %", f"{change_percent}%")
-
-with col2:
-    st.metric("Volume", f"{volume:,}")
-
-with col3:
-    risk_score = 20
-
-    if change_percent > 5:
-        risk_score += 50
-
-    if volume > 10000000:
-        risk_score += 30
-
-    if risk_score <= 30:
-        risk_label = "Low 🟢"
-
-    elif risk_score <= 60:
-        risk_label = "Moderate 🟡"
-    
-    else:
-        risk_label = "High 🔴"
-
-    st.metric(
-        "Fraud Risk Score",
-        f"{risk_score}/100 ({risk_label})"
-    )
-
-# -------- Alerts --------
-
-if risk_score >= 70:
-    st.error("🚨 High-Risk Alert: Possible Pump-and-Dump Activity")
-
-elif risk_score >= 40:
-    st.warning("⚠ Moderate Risk: Unusual Market Behavior Detected")
-
-else:
-    st.success("✅ SEBI Surveillance Status: Normal")
-
 # -------------------- LOAD DATA --------------------
 @st.cache_data
 def load_trades():
@@ -497,7 +451,7 @@ with st.sidebar:
     av_key_sidebar = st.text_input("Alpha Vantage API Key (optional)", type="password")
     live_updates = st.checkbox("Enable simulated push alerts", value=False)
     selected = option_menu(
-        "FraudShield AI",
+        " 🖥️ FraudShield AI",
         ["🏠 Home", "📊 Trading Fraud Detection", "📱 Investor FraudShield", "📈 Reports"],
         icons=["house", "graph-up", "shield-check", "file-earmark-text"],
         menu_icon="cast",
@@ -514,6 +468,52 @@ if selected == "🏠 Home":
         st_lottie(fraud_anim, height=300, key="fraud")
     st.markdown("### Protecting Every Trade, Securing Every Investor.")
     st.info("An AI-powered platform for fraud detection & investor protection aligned with SEBI’s mandate.")
+
+# ---------------- Surveillance Dashboard ----------------
+
+st.subheader("🔍 Market Surveillance Engine")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric("Price Change %", f"{change_percent}%")
+
+with col2:
+    st.metric("Volume", f"{volume:,}")
+
+with col3:
+    risk_score = 20
+
+    if change_percent > 5:
+        risk_score += 50
+
+    if volume > 10000000:
+        risk_score += 30
+
+    if risk_score <= 30:
+        risk_label = "Low 🟢"
+
+    elif risk_score <= 60:
+        risk_label = "Moderate 🟡"
+    
+    else:
+        risk_label = "High 🔴"
+
+    st.metric(
+        "Fraud Risk Score",
+        f"{risk_score}/100 ({risk_label})"
+    )
+
+# -------- Alerts --------
+
+if risk_score >= 70:
+    st.error("🚨 High-Risk Alert: Possible Pump-and-Dump Activity")
+
+elif risk_score >= 40:
+    st.warning("⚠ Moderate Risk: Unusual Market Behavior Detected")
+
+else:
+    st.success("✅ SEBI Surveillance Status: Normal")
 
     # --- Key Highlights ---
     st.subheader("✨ Why FraudShield AI?")
