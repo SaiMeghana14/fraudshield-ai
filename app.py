@@ -467,33 +467,22 @@ with st.sidebar:
     st.markdown("""
     <style>
     
-    /* Hide radio circles */
-    div[role="radiogroup"] label div:first-child {
-        display:none !important;
+    /* Hide only radio circles */
+    input[type="radio"] {
+        display:none;
     }
     
-    /* Menu item styling */
+    /* Style menu rows */
     div[role="radiogroup"] label {
-        display:block;
         padding:12px 16px;
         margin-bottom:10px;
         border-radius:12px;
-        background:white;
-        font-weight:500;
-        transition:0.2s;
+        background:#ffffff;
     }
     
-    /* Hover effect */
+    /* Hover */
     div[role="radiogroup"] label:hover {
         background:#f3f4f6;
-    }
-    
-    /* Selected item (red highlight like before) */
-    div[role="radiogroup"] input:checked + div {
-        background:#ff5a5f !important;
-        color:white !important;
-        border-radius:12px;
-        padding:12px 16px;
     }
     
     </style>
