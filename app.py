@@ -525,17 +525,17 @@ if selected == "🏠 Home":
     with col3:
         st.metric("✅ Accuracy", "95%+")
     with col4:
-    suspicious_signals = 0
-    if change_percent > 5:
-        suspicious_signals += 1
-
-    if volume > 10000000:
-        suspicious_signals += 1
-
-    st.metric(
-        "Suspicious Signals",
-        suspicious_signals
-    )
+        suspicious_signals = 0
+        if change_percent > 5:
+            suspicious_signals += 1
+    
+        if volume > 10000000:
+            suspicious_signals += 1
+    
+        st.metric(
+            "Suspicious Signals",
+            suspicious_signals
+        )
 
     # --- Interactive Buttons ---
     st.subheader("🚀 Quick Actions")
