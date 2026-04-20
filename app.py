@@ -32,9 +32,19 @@ price = float(quote["05. price"])
 change_percent = float(quote["10. change percent"].replace("%",""))
 volume = int(quote["06. volume"])
 
+# -------------------- LOAD ANIMATION --------------------
+def load_lottie(path):
+    try:
+        with open(path, "r") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+fraud_anim = load_lottie("assets/animations/fraud.json")
+
 # ---------------- Surveillance Dashboard ----------------
 
-st.subheader("🛡 Market Surveillance Engine")
+st.subheader("🔍 Market Surveillance Engine")
 
 col1, col2, col3 = st.columns(3)
 
@@ -53,7 +63,19 @@ with col3:
     if volume > 10000000:
         risk_score += 30
 
-    st.metric("Fraud Risk Score", f"{risk_score}/100")
+    if risk_score <= 30:
+    risk_label = "Low 🟢"
+
+elif risk_score <= 60:
+    risk_label = "Moderate 🟡"
+
+else:
+    risk_label = "High 🔴"
+
+st.metric(
+    "Fraud Risk Score",
+    f"{risk_score}/100 ({risk_label})"
+)
 
 # -------- Alerts --------
 
@@ -64,17 +86,7 @@ elif risk_score >= 40:
     st.warning("⚠ Moderate Risk: Unusual Market Behavior Detected")
 
 else:
-    st.success("✅ Market Activity Normal")
-
-# -------------------- LOAD ANIMATION --------------------
-def load_lottie(path):
-    try:
-        with open(path, "r") as f:
-            return json.load(f)
-    except Exception:
-        return None
-
-fraud_anim = load_lottie("assets/animations/fraud.json")
+    st.success("✅ SEBI Surveillance Status: Normal")
 
 # -------------------- LOAD DATA --------------------
 @st.cache_data
@@ -476,7 +488,7 @@ def scam_quiz():
         else:
             st.error("❌ Incorrect — this is a scam. Be careful with prize claims.")
 
-# -------------------- HOME / SIDEBAR NAV (keep existing but add quick actions integration) --------------------
+# -------------------- HOME / SIDEBAR NAV  --------------------
 import os
 if "selected_page" not in st.session_state:
     st.session_state["selected_page"] = "🏠 Home"
@@ -505,13 +517,25 @@ if selected == "🏠 Home":
 
     # --- Key Highlights ---
     st.subheader("✨ Why FraudShield AI?")
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("🔍 Fraud Cases Analyzed", "12,450+")
     with col2:
         st.metric("⚡ Avg Detection Speed", "0.8 sec")
     with col3:
         st.metric("✅ Accuracy", "95%+")
+    with col4:
+    suspicious_signals = 0
+    if change_percent > 5:
+        suspicious_signals += 1
+
+    if volume > 10000000:
+        suspicious_signals += 1
+
+    st.metric(
+        "Suspicious Signals",
+        suspicious_signals
+    )
 
     # --- Interactive Buttons ---
     st.subheader("🚀 Quick Actions")
