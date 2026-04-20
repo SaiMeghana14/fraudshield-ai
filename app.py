@@ -465,10 +465,18 @@ with st.sidebar:
     live_updates = st.checkbox("Enable simulated push alerts", value=False)
     st.sidebar.markdown("## 🖥️ FraudShield AI")
     selected = option_menu(
-        None,
-        ["🏠 Home", "📊 Trading Fraud Detection", "📱 Investor FraudShield", "📈 Reports"],
-        default_index=["🏠 Home", "📊 Trading Fraud Detection", "📱 Investor FraudShield", "📈 Reports"].index(st.session_state["selected_page"])
-    )
+    None,
+    ["🏠 Home",
+     "📊 Trading Fraud Detection",
+     "📱 Investor FraudShield",
+     "📈 Reports"],
+    default_index=[
+        "🏠 Home",
+        "📊 Trading Fraud Detection",
+        "📱 Investor FraudShield",
+        "📈 Reports"
+    ].index(st.session_state["selected_page"])
+)
 
 # keep sidebar and session state in sync
 st.session_state["selected_page"] = selected
