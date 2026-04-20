@@ -21,6 +21,16 @@ from langdetect import detect
 # -------------------- PAGE CONFIG --------------------
 st.set_page_config(page_title="FraudShield AI", page_icon="🛡️", layout="wide")
 
+# ------------------ ALPHA VANTAGE API ------------------
+
+api_key = st.secrets["ALPHA_VANTAGE_API_KEY"]
+
+url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=IBM&apikey={api_key}"
+
+data = requests.get(url).json()
+
+st.write(data)
+
 # -------------------- LOAD ANIMATION --------------------
 def load_lottie(path):
     try:
