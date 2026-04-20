@@ -64,18 +64,18 @@ with col3:
         risk_score += 30
 
     if risk_score <= 30:
-    risk_label = "Low 🟢"
+        risk_label = "Low 🟢"
 
-elif risk_score <= 60:
-    risk_label = "Moderate 🟡"
+    elif risk_score <= 60:
+        risk_label = "Moderate 🟡"
+    
+    else:
+        risk_label = "High 🔴"
 
-else:
-    risk_label = "High 🔴"
-
-st.metric(
-    "Fraud Risk Score",
-    f"{risk_score}/100 ({risk_label})"
-)
+    st.metric(
+        "Fraud Risk Score",
+        f"{risk_score}/100 ({risk_label})"
+    )
 
 # -------- Alerts --------
 
