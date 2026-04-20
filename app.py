@@ -27,11 +27,24 @@ api_key = st.secrets["ALPHA_VANTAGE_API_KEY"]
 url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=IBM&apikey={api_key}"
 data = requests.get(url).json()
 
-quote = data["Global Quote"]
-price = float(quote["05. price"])
-change_percent = float(quote["10. change percent"].replace("%",""))
-volume = int(quote["06. volume"])
+if "Global Quote" in data and data["Global Quote"]:
 
+    quote = data["Global Quote"]
+
+    price = float(quote["05. price"])
+    change_percent = float(
+        quote["10. change percent"].replace("%","")
+    )
+    volume = int(quote["06. volume"])
+
+else:
+    st.warning("⚠ Live market data unavailable. Using fallback demo values.")
+
+    # Fallback values for demo
+    price = 253.47
+    change_percent = 0.98
+    volume = 5671471
+    
 # -------------------- LOAD ANIMATION --------------------
 def load_lottie(path):
     try:
