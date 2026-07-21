@@ -9,7 +9,6 @@ import plotly.graph_objects as go
 import networkx as nx
 import matplotlib.pyplot as plt
 from io import BytesIO
-import cv2
 from pyzbar.pyzbar import decode
 from PIL import Image
 import requests
