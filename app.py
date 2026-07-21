@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 import networkx as nx
 import matplotlib.pyplot as plt
 from io import BytesIO
-from pyzbar.pyzbar import decode
+import cv2
 from PIL import Image
 import requests
 import yfinance as yf
@@ -815,13 +815,16 @@ elif selected == "📱 Investor FraudShield":
             image = Image.open(uploaded)
             st.image(image, width=300)
 
-            decoded = decode(image)
+            image_np = np.array(image)
 
-            if decoded:
-
-                qr = decoded[0].data.decode()
+            detector = cv2.QRCodeDetector()
+            qr, points, _ = detector.detectAndDecode(image_np)
+            
+            if qr:
                 st.success("QR Decoded Successfully")
                 st.code(qr)
+            else:
+                st.warning("No QR code detected.")
 
                 risk = 20
                 reasons = []
