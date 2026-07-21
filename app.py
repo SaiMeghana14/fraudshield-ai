@@ -429,18 +429,290 @@ def sebi_bot(query):
     return "I don't have a direct answer. Please consult the SEBI website or upload a specific query."
 
 # -------------------- ENGAGEMENT: QUIZ & BADGES --------------------
-def scam_quiz():
-    st.subheader("🎮 Spot the Scam Quiz")
-    q = "You receive an email: 'You are a lottery winner! Click here to claim your prize.' Is this a scam?"
-    ans = st.radio(q, ["Yes", "No"], index=0)
-    if st.button("Submit Answer"):
-        if ans == "Yes":
-            st.success("✅ Correct — this is a scam.")
-            st.balloons()
-            st.success("🏅 You earned the 'Investor Guardian' badge!")
-        else:
-            st.error("❌ Incorrect — this is a scam. Be careful with prize claims.")
+def show_level(score):
+    st.markdown("---")
+    st.subheader("🏅 Your Security Level")
+    if score==0:
+        st.error("Level 1 ⭐ Beginner")
 
+    elif score==1:
+        st.warning("Level 2 ⭐⭐ Aware Investor")
+
+    elif score==2:
+        st.info("Level 3 ⭐⭐⭐ Scam Detective")
+
+    elif score==3:
+        st.success("Level 4 ⭐⭐⭐⭐ Fraud Hunter")
+
+    else:
+        st.balloons()
+        st.success("Level 5 ⭐⭐⭐⭐⭐ Cyber Guardian")
+
+    progress=(score+1)/5
+    st.progress(progress)
+    
+def scam_quiz():
+
+    st.subheader("🕵️ Real or Scam Challenge")
+    challenges = [
+        {
+            "title":"🏦 SBI Login Portal",
+            "image":"assets/quiz/fake_sbi.png",
+            "answer":"Scam",
+            "explanation":"Fake SBI login pages usually use suspicious URLs and request credentials."
+        },
+
+        {
+            "title":"🏦 SBI Official Portal",
+            "image":"assets/quiz/real_sbi.png",
+            "answer":"Real",
+            "explanation":"Official SBI website with HTTPS and correct domain."
+        },
+
+        {
+            "title":"📧 Amazon Delivery Email",
+            "image":"assets/quiz/fake_amazon_email.png",
+            "answer":"Scam",
+            "explanation":"Contains urgency and suspicious links."
+        },
+
+        {
+            "title":"🔐 Google Login",
+            "image":"assets/quiz/real_google_login.png",
+            "answer":"Real",
+            "explanation":"Official Google login page."
+        }
+    ]
+
+    score = 0
+
+    for i,item in enumerate(challenges):
+        st.markdown("---")
+        st.subheader(item["title"])
+        st.image(item["image"],use_container_width=True)
+        answer = st.radio(
+            "Is this Real or Scam?",
+            ["Real","Scam"],
+            key=f"challenge{i}"
+        )
+
+        if st.button(f"Check Answer {i}"):
+            if answer == item["answer"]:
+                st.success("✅ Correct")
+
+            else:
+                st.error("❌ Incorrect")
+
+            st.info(item["explanation"])
+
+    st.markdown("---")
+
+    if st.button("🏆 Calculate Final Score"):
+        score = 0
+
+        for i,item in enumerate(challenges):
+            if st.session_state.get(f"challenge{i}") == item["answer"]:
+                score += 1
+
+        st.metric("Final Score",f"{score}/{len(challenges)}")
+        show_level(score)
+
+def qr_challenge():
+
+    st.subheader("🧩 QR Challenge")
+    st.write("Can you identify whether this QR code is safe?")
+    st.image(
+        "assets/quiz/fake_paytm_qr.png",
+        use_container_width=False
+    )
+    
+    image = cv2.imread("assets/quiz/fake_paytm_qr.png")
+    detector = cv2.QRCodeDetector()
+    decoded_text, points, _ = detector.detectAndDecode(image)
+
+    ans = st.radio(
+        "Is this QR Safe?",
+        ["Safe", "Scam"],
+        key="qrchallenge"
+    )
+
+    if st.button("Reveal QR Answer"):
+        if ans == "Scam":
+            st.success("✅ Correct!")
+            st.balloons()
+
+        else:
+            st.error("❌ Incorrect")
+
+        if decoded_text:
+            st.markdown("### 📄 Decoded QR Content")
+            st.code(decoded_text)
+    
+            # ---------------- AI Risk Analysis ----------------
+    
+            risk = 0
+            reasons = []
+    
+            text = decoded_text.lower()
+            if "upi://" in text:
+                risk += 30
+                reasons.append("Contains UPI payment request")
+    
+            if "bit.ly" in text:
+                risk += 40
+                reasons.append("Uses shortened URL")
+    
+            if "tinyurl" in text:
+                risk += 40
+                reasons.append("Uses shortened URL")
+    
+            if "http://" in text:
+                risk += 20
+                reasons.append("Uses unsecured HTTP")
+    
+            if "https://" not in text:
+                risk += 10
+                reasons.append("HTTPS missing")
+    
+            st.markdown("### 🤖 AI Analysis")
+            if reasons:
+                for reason in reasons:
+                    st.write("✔", reason)
+    
+            else:
+                st.write("✔ No suspicious indicators detected.")
+    
+            if risk >= 70:
+                st.error("🚨 High Risk QR")
+    
+            elif risk >= 40:
+                st.warning("⚠️ Suspicious QR")
+    
+            else:
+                st.success("✅ Looks Safe")
+
+        else:
+            st.warning("Unable to decode QR.")
+
+    # ---------------- BONUS CHALLENGE ----------------
+
+    st.markdown("---")
+
+    st.subheader("⭐ Bonus QR Challenge")
+
+    st.image(
+        "assets/quiz/safe_qr.png",
+        use_container_width=False,
+        width=300
+    )
+
+    ans2 = st.radio(
+        "Is this QR Safe?",
+        ["Safe", "Scam"],
+        key="safeqr"
+    )
+
+    if st.button("Reveal Safe QR"):
+
+        if ans2 == "Safe":
+            st.success("✅ Correct!")
+
+        else:
+            st.error("❌ Incorrect")
+
+        image = cv2.imread("assets/quiz/safe_qr.png")
+        detector = cv2.QRCodeDetector() 
+        decoded_safe, _, _ = detector.detectAndDecode(image)
+        
+        if decoded_safe:
+            st.markdown("### 📄 Decoded QR Content") 
+            st.code(decoded_safe)
+        
+            if decoded_safe.startswith("https://"):
+                st.success("✔ HTTPS Verified")
+        
+            else:
+                st.warning("HTTP detected")
+        
+            if "paytm.com" in decoded_safe.lower():
+                st.success("✔ Official Paytm Domain")
+        
+            else:
+                st.warning("Unknown domain")
+        
+            st.success("✅ This QR appears to be safe.")
+        
+        else:
+            st.error("Unable to decode QR.")
+            
+    st.markdown("---")
+    st.subheader("📤 Try Your Own QR Code")
+    
+    uploaded = st.file_uploader(
+        "Upload any QR Code",
+        type=["png", "jpg", "jpeg"],
+        key="user_qr"
+    )
+    
+    if uploaded:
+        image = Image.open(uploaded)
+        st.image(image, width=300)
+        image_np = np.array(image)
+        detector = cv2.QRCodeDetector()
+    
+        decoded, _, _ = detector.detectAndDecode(image_np)
+        if decoded:
+            st.success("QR Decoded Successfully")
+            st.code(decoded)
+    
+            risk = 0
+            reasons = []
+    
+            text = decoded.lower()
+            suspicious_patterns = {
+                "bit.ly": 40,
+                "tinyurl": 40,
+                "goo.gl": 35,
+                "rb.gy": 35,
+                "t.co": 35,
+                "cutt.ly": 35,
+                "upi://": 30,
+                "wallet": 15,
+                "pay": 15,
+                "http://": 20
+            }
+    
+            for keyword, pts in suspicious_patterns.items():
+                if keyword in text:
+                    risk += pts
+                    reasons.append(f"Detected '{keyword}'")
+    
+            if "https://" not in text:
+                risk += 10
+                reasons.append("HTTPS missing")
+    
+            risk = min(risk, 100)
+            st.progress(risk)
+            st.markdown("### 🤖 AI Analysis")
+    
+            if reasons:
+                for reason in reasons:
+                    st.write("✔", reason)
+    
+            else:
+                st.write("✔ No suspicious indicators found.")
+    
+            if risk >= 70:
+                st.error("🚨 High Risk")
+    
+            elif risk >= 40:
+                st.warning("⚠️ Suspicious")
+    
+            else:
+                st.success("✅ Looks Safe")
+    
+        else:
+            st.error("No QR code detected.")        
 # -------------------- HOME / SIDEBAR NAV  --------------------
 import os
 if "selected_page" not in st.session_state:
@@ -672,14 +944,14 @@ elif selected == "📱 Investor FraudShield":
     st.header("🛡️ Investor FraudShield")
     st.caption("AI-powered Website, Message & QR Scam Detection")
 
-    tab1, tab2, tab3, tab4 = st.tabs(
-        [
-            "🌐 Website Scanner",
-            "📩 SMS / Email",
-            "📷 QR Scanner",
-            "📊 AI Dashboard"
-        ]
-    )
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+        "🌐 Website Scanner",
+        "📩 SMS / Email",
+        "📷 QR Scanner",
+        "📊 AI Dashboard",
+        "📚 Insights",
+        "🎮 Learn & Quiz"
+    ])
 
     with tab1:
         st.subheader("🌐 Website Scam Detection")
@@ -737,12 +1009,46 @@ elif selected == "📱 Investor FraudShield":
                 score = min(score,100)
                 st.session_state.website_score = score
 
+                st.session_state.website_result = {
+                    "url": url,
+                    "score": score,
+                    "verdict": (
+                        "SAFE"
+                        if score < 30
+                        else "SUSPICIOUS"
+                        if score < 60
+                        else "HIGH RISK"
+                    ),
+                    "https": "Yes" if url.startswith("https://") else "No",
+                    "indicators": len(reasons),
+                    "recommendations": (
+                        [
+                            "Website appears legitimate.",
+                            "Verify before entering passwords.",
+                            "Bookmark trusted websites."
+                        ]
+                        if score < 30 else
+                        [
+                            "Double-check the domain.",
+                            "Avoid entering banking details.",
+                            "Search for official reviews."
+                        ]
+                        if score < 60 else
+                        [
+                            "Do NOT enter credentials.",
+                            "Do NOT download files.",
+                            "Report phishing website.",
+                            "Close the webpage immediately."
+                        ]
+                    )
+                }
+
                 st.progress(score)
 
-                if score < 30:
+                if score < 40:
                     st.success("✅ Website appears Safe")
-                elif score < 60:
-                    st.warning("⚠ Suspicious Website")
+                elif score < 70:
+                    st.warning("⚠️ Suspicious Website")
                 else:
                     st.error("🚨 High Risk Phishing Website")
 
@@ -773,12 +1079,46 @@ elif selected == "📱 Investor FraudShield":
 
             else:
                 result = detect_scam(user_msg)
+                label = str(result["label"]).lower()
                 score = min(int(result["score"]*100),100)
 
                 st.session_state.message_score = score
+
+                prediction = (
+                    "SCAM"
+                    if label in ["spam","scam","fraud","phishing","1","malicious"]
+                    else "SUSPICIOUS"
+                    if score >= 40
+                    else "SAFE"
+                )
+                
+                st.session_state.message_result = {
+                    "prediction": prediction,
+                    "score": score,
+                    "categories": classify_scam(user_msg),
+                    "language": detect(user_msg),
+                    "recommendations": (
+                        [
+                            "Delete the message.",
+                            "Do not click links.",
+                            "Never share OTP.",
+                            "Block the sender."
+                        ]
+                        if score >= 70 else
+                        [
+                            "Verify sender identity.",
+                            "Inspect links carefully.",
+                            "Avoid sharing personal information."
+                        ]
+                        if score >= 40 else
+                        [
+                            "Appears safe.",
+                            "Remain cautious with attachments."
+                        ]
+                    )
+                }
                 st.progress(score)
 
-                label = str(result["label"]).lower()
                 if label in ["spam", "scam", "fraud", "phishing", "1", "malicious"]:
                     st.error("🚨 Scam Detected")
                 
@@ -823,8 +1163,6 @@ elif selected == "📱 Investor FraudShield":
             if qr:
                 st.success("QR Decoded Successfully")
                 st.code(qr)
-            else:
-                st.warning("No QR code detected.")
 
                 risk = 20
                 reasons = []
@@ -850,6 +1188,36 @@ elif selected == "📱 Investor FraudShield":
                 risk = min(risk,100)
                 st.session_state.qr_score = risk
 
+                st.session_state.qr_result = {
+                    "content": qr,
+                    "score": risk,
+                    "verdict": (
+                        "SAFE"
+                        if risk < 30
+                        else "SUSPICIOUS"
+                        if risk < 60
+                        else "HIGH RISK"
+                    ),
+                    "indicators": len(reasons),
+                    "recommendations": (
+                        [
+                            "QR appears safe.",
+                            "Verify before making payments."
+                        ]
+                        if risk < 40 else
+                        [
+                            "Open only if trusted.",
+                            "Verify destination URL."
+                        ]
+                        if risk < 70 else
+                        [
+                            "Avoid scanning this QR.",
+                            "Do not proceed to payment.",
+                            "Verify the source."
+                        ]
+                    )
+                }
+
                 st.progress(risk)
 
                 st.markdown("### 🔍 QR Analysis")
@@ -858,70 +1226,296 @@ elif selected == "📱 Investor FraudShield":
                     for reason in reasons:
                         st.write("✔", reason)
                 else:
-                    st.write("✔ No suspicious indicators found.")
+                    st.write(" No suspicious indicators found.")
 
-                if risk > 60:
-                    st.error("🚨 Suspicious QR Code")
-                elif risk > 30:
-                    st.warning("⚠ Medium Risk")
+                if risk >= 70:
+                    st.error("🚨 High Risk QR Code")
+                elif risk > 40:
+                    st.warning("⚠️ Medium Risk QR Code")
                 else:
                     st.success("✅ QR appears Safe")
-
+        else:
+            st.warning("❌ No QR code detected. Please upload a valid QR image.")
+            
     with tab4:
 
         st.subheader("📊 Overall Fraud Assessment")
-
+    
         overall = max(
             st.session_state.website_score,
             st.session_state.message_score,
             st.session_state.qr_score
         )
-
+    
         gauge = go.Figure(
             go.Indicator(
                 mode="gauge+number",
                 value=overall,
-                title={"text":"Overall Fraud Risk"},
+                title={"text": "Overall Fraud Risk"},
                 gauge={
-                    "axis":{"range":[0,100]},
-                    "bar":{"color":"darkred"},
-                    "steps":[
-                        {"range":[0,30],"color":"green"},
-                        {"range":[30,60],"color":"yellow"},
-                        {"range":[60,100],"color":"red"}
+                    "axis": {"range": [0, 100]},
+                    "bar": {"color": "darkred"},
+                    "steps": [
+                        {"range": [0, 30], "color": "green"},
+                        {"range": [30, 60], "color": "yellow"},
+                        {"range": [60, 100], "color": "red"}
                     ]
                 }
             )
         )
-
+    
         st.plotly_chart(gauge, use_container_width=True)
-
-        c1,c2,c3 = st.columns(3)
+    
+        c1, c2, c3 = st.columns(3)
+    
         c1.metric("🌐 Website", f"{st.session_state.website_score}%")
         c2.metric("📩 Message", f"{st.session_state.message_score}%")
         c3.metric("📷 QR", f"{st.session_state.qr_score}%")
+    
+        st.markdown("---")
+        st.header("📋 Scan Results & Recommendations")
+    
+        # ---------------- Empty State ----------------
+    
+        if not any([
+            "website_result" in st.session_state,
+            "message_result" in st.session_state,
+            "qr_result" in st.session_state
+        ]):
+    
+            st.info("👆 Scan a Website, Message or QR Code to view detailed results here.")
+    
+        # ---------------- Website ----------------
+    
+        if "website_result" in st.session_state:
+            website = st.session_state.website_result
+            st.subheader("🌐 Website Scan")
+            st.table({
+                "Parameter": [
+                    "Website",
+                    "Risk Score",
+                    "Verdict",
+                    "HTTPS",
+                    "Indicators Found"
+                ],
+                "Value": [
+                    website.get("url", "-"),
+                    f'{website.get("score",0)}%',
+                    website.get("verdict","-"),
+                    website.get("https","-"),
+                    website.get("indicators",0)
+                ]
+            })
+    
+            st.write("### 🛡️ Recommendations")
+            for item in website.get("recommendations", []):
+                st.success("✔ " + item)
+    
+        # ---------------- Message ----------------
+    
+        if "message_result" in st.session_state:
+    
+            message = st.session_state.message_result
+    
+            st.markdown("---")
+    
+            st.subheader("📩 Email / SMS Scan")
+    
+            st.table({
+                "Parameter": [
+                    "Prediction",
+                    "Risk Score",
+                    "Language",
+                    "Categories"
+                ],
+                "Value": [
+                    message.get("prediction","-"),
+                    f'{message.get("score",0)}%',
+                    message.get("language","Unknown"),
+                    ", ".join(message.get("categories", ["None"]))
+                ]
+            })
+    
+            st.write("### 🛡️ Recommendations")
+    
+            for item in message.get("recommendations", []):
+    
+                st.success("✔ " + item)
+    
+        # ---------------- QR ----------------
+    
+        if "qr_result" in st.session_state:
+    
+            qr = st.session_state.qr_result
+    
+            st.markdown("---")
+    
+            st.subheader("📷 QR Scan")
+    
+            st.table({
+                "Parameter": [
+                    "Decoded Content",
+                    "Risk Score",
+                    "Verdict",
+                    "Indicators"
+                ],
+                "Value": [
+                    qr.get("content","-"),
+                    f'{qr.get("score",0)}%',
+                    qr.get("verdict","-"),
+                    qr.get("indicators",0)
+                ]
+            })
+    
+            st.write("### 🛡️ Recommendations")
+    
+            for item in qr.get("recommendations", []):
+    
+                st.success("✔ " + item)
+    
+        # ---------------- Overall Verdict ----------------
+    
+        st.markdown("---")
+    
+        if overall >= 70:
+    
+            st.error("🚨 HIGH RISK")
+    
+            explanation = (
+                "Multiple high-risk indicators were detected. "
+                "Avoid interacting with the submitted content."
+            )
+    
+        elif overall >= 40:
+    
+            st.warning("⚠️ MEDIUM RISK")
+    
+            explanation = (
+                "Some suspicious indicators were detected. "
+                "Proceed carefully."
+            )
+    
+        else:
+    
+            st.success("✅ LOW RISK")
+    
+            explanation = (
+                "No major fraud indicators were detected."
+            )
+    
+        st.markdown("### 🤖 AI Explanation")
+    
+        st.info(explanation)
+    
+        st.markdown("### 🛡️ General Safety Recommendations")
+    
+        st.write("✔ Never share OTPs or banking credentials.")
+        st.write("✔ Verify the sender or website before proceeding.")
+        st.write("✔ Avoid clicking suspicious links.")
+        st.write("✔ Report scams to the National Cyber Crime Portal.")
+        st.write("✔ Enable two-factor authentication whenever possible.")
+    
+        # ---------------- Community Reporting ----------------
+    
+        st.markdown("---")
+    
+        st.subheader("🚩 Community Reporting")
+        report_text = ""
 
+        if "website_result" in st.session_state:
+            report_text += (
+                "Website: "
+                + website.get("url","")
+                + "\n"
+            )
+    
+        if "message_result" in st.session_state:
+            report_text += (
+                "Message: "
+                + message.get("prediction","")
+                + "\n"
+            )
+    
+        if "qr_result" in st.session_state:
+            report_text += (
+                "QR: "
+                + str(qr.get("content",""))
+            )
+    
+        if st.button("🚩 Report Current Scan"):
+    
+            if report_text.strip():
+    
+                append_report(report_text, "Investor FraudShield")
+    
+                st.success(
+                    "✅ Thank you! Your report has been submitted."
+                )
+    
+            else:
+    
+                st.warning(
+                    "Please scan a Website, Message or QR Code first."
+                )
+
+    with tab5:
+        st.subheader("📈 Scam Trends")
+        scam_trends()
+    
+        st.markdown("---")
+    
+        st.subheader("🌐 Scam Network")
+        scam_network()
+
+    with tab6:
+        st.title("🎮 Fraud Awareness Hub")
+        scam_quiz()
+        st.divider()
+        qr_challenge()
+        st.divider()
+        
+        st.subheader("📚 Learn Before You Invest")
+        st.success("""
+        ✔ Never share OTP
+        
+        ✔ Verify URLs
+        
+        ✔ Don't trust guaranteed returns
+        
+        ✔ Use official payment apps
+        
+        ✔ Check HTTPS before logging in
+        """)
+
+        st.divider()
+        st.subheader("🏆 Hall of Fame")
+        leaderboard = pd.DataFrame({
+            "Level":[
+                "Cyber Guardian",
+                "Fraud Hunter",
+                "Scam Detective",
+                "Aware Investor",
+                "Beginner"
+            ],
+            "Score":[
+                "5/5",
+                "4/5",
+                "3/5",
+                "2/5",
+                "1/5"
+            ]
+        })
+        
+        st.table(leaderboard)
+        
         st.markdown("---")
 
-        if overall >= 70:
-            st.error("🚨 HIGH RISK")
-            explanation = "Multiple high-risk indicators detected. Avoid interacting with the submitted content."
-        elif overall >= 40:
-            st.warning("⚠ MEDIUM RISK")
-            explanation = "Some suspicious indicators were detected. Exercise caution before proceeding."
-        else:
-            st.success("✅ LOW RISK")
-            explanation = "No major fraud indicators detected."
-
-        st.markdown("### 🤖 AI Explanation")
-        st.info(explanation)
-
-        st.markdown("### 🛡 Recommended Actions")
-        st.write("✔ Do not click suspicious links")
-        st.write("✔ Verify the sender or website")
-        st.write("✔ Report scams to the National Cyber Crime Portal")
-        st.write("✔ Block suspicious contacts")
-        st.write("✔ Never share OTPs or banking credentials")
+        st.subheader("🤖 SEBI Rulebook Assistant")
+        query = st.text_input(
+            "Ask anything about SEBI regulations"
+        )
+        if query:
+            st.info(sebi_bot(query))
 
 # -------------------- REPORT --------------------
 elif selected == "📈 Reports":
