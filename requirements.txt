@@ -12,6 +12,5 @@ reportlab
 langdetect
 yfinance
 openpyxl
-opencv-python
 pyzbar
 Pillow
