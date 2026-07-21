@@ -867,9 +867,6 @@ elif selected == "📱 Investor FraudShield":
                 else:
                     st.success("✅ QR appears Safe")
 
-            else:
-                st.warning("No QR code detected.")
-
     with tab4:
 
         st.subheader("📊 Overall Fraud Assessment")
