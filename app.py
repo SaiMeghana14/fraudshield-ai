@@ -1,14 +1,17 @@
 import streamlit as st  
-from streamlit_option_menu import option_menu
 import pandas as pd
 import numpy as np
 import time
 import json
 import plotly.express as px
 import plotly.graph_objects as go
+
 import networkx as nx
 import matplotlib.pyplot as plt
 from io import BytesIO
+import cv2
+from pyzbar.pyzbar import decode
+from PIL import Image
 import requests
 import yfinance as yf
 
@@ -360,39 +363,13 @@ def generate_report():
     """)
     st.success("✅ Report Generated")
 
-def download_report_files(df):
-    import io
-    from openpyxl import Workbook  # make sure openpyxl is installed in requirements.txt
-
-    # Save to Excel
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="fraud_report")
-    excel_data = output.getvalue()
-
-    st.download_button(
-        label="⬇️ Download Report (Excel)",
-        data=excel_data,
-        file_name="fraud_report.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
-    # Save to CSV
-    csv_data = df.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        label="⬇️ Download Report (CSV)",
-        data=csv_data,
-        file_name="fraud_report.csv",
-        mime="text/csv"
-    )
-
 # -------------------- COMMUNITY REPORTING (persist to CSV) --------------------
 REPORTS_PATH = "data/reports.csv"
 def append_report(msg_text, source="web"):
     # ensure folder exists and append
     try:
         new = {"message": msg_text, "source": source, "ts": pd.Timestamp.now()}
-        if not st.session_state.get("reports_df"):
+        if "reports_df" not in st.session_state:
             if os.path.exists(REPORTS_PATH):
                 st.session_state["reports_df"] = pd.read_csv(REPORTS_PATH)
             else:
@@ -410,6 +387,16 @@ def download_report_files(df):
     df.to_excel(output, index=False, sheet_name="fraud_report")
     output.seek(0)
     st.download_button("⬇️ Download Excel Report", data=output, file_name="fraud_report.xlsx")
+
+    # CSV
+    csv_data = df.to_csv(index=False).encode("utf-8")
+
+    st.download_button(
+        "⬇️ Download CSV Report",
+        data=csv_data,
+        file_name="fraud_report.csv",
+        mime="text/csv"
+    )
 
     # PDF simple (text-based) using reportlab if available
     try:
@@ -488,16 +475,20 @@ with st.sidebar:
     </style>
     """, unsafe_allow_html=True)
     
+    pages = [
+        "🏠 Home",
+        "📊 Trading Fraud Detection",
+        "📱 Investor FraudShield",
+        "📈 Reports"
+    ]
+    
     selected = st.sidebar.radio(
-    "",
-    ["🏠 Home",
-     "📊 Trading Fraud Detection",
-     "📱 Investor FraudShield",
-     "📈 Reports"]
-)
-
-# keep sidebar and session state in sync
-st.session_state["selected_page"] = selected
+        "",
+        pages,
+        index=pages.index(st.session_state.get("selected_page", "🏠 Home"))
+    )
+    
+    st.session_state["selected_page"] = selected
 
 # -------------------- HOME --------------------
 if selected == "🏠 Home":
@@ -512,7 +503,6 @@ if selected == "🏠 Home":
     st.subheader("🔍 Market Surveillance Engine")
     
     col1, col2, col3 = st.columns(3)
-    
     with col1:
         st.metric("Price Change %", f"{change_percent}%")
     
@@ -537,10 +527,22 @@ if selected == "🏠 Home":
         else:
             risk_label = "High 🔴"
     
-        st.metric(
-            "Fraud Risk Score",
-            f"{risk_score}/100 ({risk_label})"
-        )
+        fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=risk_score,
+        title={"text":"Fraud Risk"},
+        gauge={
+            "axis":{"range":[0,100]},
+            "bar":{"color":"red"},
+            "steps":[
+                {"range":[0,30],"color":"green"},
+                {"range":[30,60],"color":"yellow"},
+                {"range":[60,100],"color":"red"}
+            ]
+        }
+    ))
+    
+    st.plotly_chart(fig,use_container_width=True)
     
     # -------- Alerts --------
     
@@ -575,18 +577,24 @@ if selected == "🏠 Home":
             suspicious_signals
         )
 
-    # --- Interactive Buttons ---
+    # --- Quick Actions ---
     st.subheader("🚀 Quick Actions")
-    colA, colB = st.columns(2)
     
-    with colA:
-        if st.button("📊 Try Anomaly Detector"):
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("📊 Trading Fraud Detection", use_container_width=True):
             st.session_state["selected_page"] = "📊 Trading Fraud Detection"
             st.rerun()
     
-    with colB:
-        if st.button("📱 Check Scam Messages"):
+    with col2:
+        if st.button("🛡 Investor FraudShield", use_container_width=True):
             st.session_state["selected_page"] = "📱 Investor FraudShield"
+            st.rerun()
+    
+    with col3:
+        if st.button("📈 View Reports", use_container_width=True):
+            st.session_state["selected_page"] = "📈 Reports"
             st.rerun()
 
     # --- Live Fraud Tips ---
@@ -650,76 +658,271 @@ elif selected == "📊 Trading Fraud Detection":
     if not anomalies.empty:
         download_report_files(anomalies)
 
+
 # -------------------- INVESTOR FRAUDSHIELD --------------------
 elif selected == "📱 Investor FraudShield":
-    st.header("📱 Investor FraudShield – Scam Message Detector")
-    user_msg = st.text_area("Paste SMS/Email content here:")
 
-    if st.button("Check Fraud Risk"):
-        if not user_msg.strip():
-            st.warning("⚠️ Please enter a message first.")
-        else:
-            result = detect_scam(user_msg)
-            categories = classify_scam(user_msg)
-            highlighted = highlight_keywords(user_msg)
-            explanations = explain_scam(user_msg)
+    # Store scores across tabs
+    if "website_score" not in st.session_state:
+        st.session_state.website_score = 0
+    if "message_score" not in st.session_state:
+        st.session_state.message_score = 0
+    if "qr_score" not in st.session_state:
+        st.session_state.qr_score = 0
 
-            st.markdown(f"### 🔍 Analyzed Message")
-            st.markdown(highlighted, unsafe_allow_html=True)
+    st.header("🛡️ Investor FraudShield")
+    st.caption("AI-powered Website, Message & QR Scam Detection")
 
-            st.progress(int(result["score"] * 100))
+    tab1, tab2, tab3, tab4 = st.tabs(
+        [
+            "🌐 Website Scanner",
+            "📩 SMS / Email",
+            "📷 QR Scanner",
+            "📊 AI Dashboard"
+        ]
+    )
 
-            if result["score"] > 0.5:
-                st.error(f"🚨 Scam Detected! Categories: {', '.join(categories)} | Confidence: {result['score']:.2f}")
+    with tab1:
+        st.subheader("🌐 Website Scam Detection")
+
+        url = st.text_input(
+            "Enter Website URL",
+            placeholder="https://example.com"
+        )
+
+        if st.button("Analyze Website"):
+
+            if not url.strip():
+                st.warning("Please enter a website URL.")
+
             else:
-                st.success(f"✅ Looks Safe | Confidence: {result['score']:.2f}")
+                score = 10
+                reasons = []
 
-            # show why flagged
-            st.subheader("Why this message was flagged")
-            for e in explanations:
-                st.write("- " + e)
+                suspicious_keywords = {
+                    "login":10,
+                    "verify":10,
+                    "secure":10,
+                    "signin":10,
+                    "account":10,
+                    "wallet":10,
+                    "bank":10,
+                    "update":10,
+                    "confirm":10
+                }
 
-            # Multi-language detection
-            try:
-                lang = detect(user_msg)
-                st.info(f"🌐 Detected Language: {lang}")
-            except Exception:
-                st.info("🌐 Language could not be detected")
+                shorteners = {
+                    "bit.ly":35,
+                    "tinyurl":30,
+                    "goo.gl":30,
+                    "rb.gy":30,
+                    "t.co":30,
+                    "cutt.ly":30
+                }
 
-            # Educational tip
-            st.warning("💡 Tip: Legit investments never guarantee profits. Be cautious with urgency keywords.")
+                if not url.lower().startswith("https://"):
+                    score += 20
+                    reasons.append("HTTPS not detected")
 
-    st.subheader("📋 Sample Scam Messages")
-    scam_samples = load_phishing()
-    st.table(scam_samples.head())
+                for site, pts in shorteners.items():
+                    if site in url.lower():
+                        score += pts
+                        reasons.append(f"URL shortener detected ({site})")
+                        break
 
-    st.subheader("📈 Scam Trends Dashboard")
-    scam_trends()
+                for word, pts in suspicious_keywords.items():
+                    if word in url.lower():
+                        score += pts
+                        reasons.append(f"Contains '{word}'")
 
-    st.subheader("🌐 Scam Network Graph")
-    scam_network()
+                score = min(score,100)
+                st.session_state.website_score = score
 
-    st.subheader("🤝 Community Reporting Hub")
-    new_report = st.text_input("Report a scam message:")
-    if st.button("Submit Report") and new_report:
-        ok = append_report(new_report, source="web")
-        if ok:
-            st.success("✅ Thank you! Your report has been added to our database.")
+                st.progress(score)
+
+                if score < 30:
+                    st.success("✅ Website appears Safe")
+                elif score < 60:
+                    st.warning("⚠ Suspicious Website")
+                else:
+                    st.error("🚨 High Risk Phishing Website")
+
+                st.markdown("### 🔍 Analysis")
+                if reasons:
+                    for r in reasons:
+                        st.write("✔", r)
+                else:
+                    st.write("✔ No suspicious indicators detected.")
+
+                st.info("AI verdict generated successfully.")
+
+    with tab2:
+
+        st.subheader("📩 Scam Message Detection")
+
+        scan_type = st.radio(
+            "Message Type",
+            ["SMS","Email"],
+            horizontal=True
+        )
+
+        user_msg = st.text_area(f"Paste {scan_type}")
+
+        if st.button("Analyze Message"):
+            if not user_msg.strip():
+                st.warning("Please enter a message.")
+
+            else:
+                result = detect_scam(user_msg)
+                score = min(int(result["score"]*100),100)
+
+                st.session_state.message_score = score
+                st.progress(score)
+
+                label = str(result["label"]).lower()
+                if label in ["spam", "scam", "fraud", "phishing", "1", "malicious"]:
+                    st.error("🚨 Scam Detected")
+                
+                elif score > 40:
+                    st.warning("⚠️ Suspicious")
+                
+                else:
+                    st.success("✅ Looks Safe")
+
+                st.markdown("### 📂 Categories")
+                for c in classify_scam(user_msg):
+                    st.write("•", c)
+
+                st.markdown("### 🤖 AI Explanation")
+                for e in explain_scam(user_msg):
+                    st.write("✔", e)
+
+                try:
+                    st.info(f"Detected Language: {detect(user_msg)}")
+                except:
+                    pass
+
+    with tab3:
+
+        st.subheader("📷 QR Code Scanner")
+
+        uploaded = st.file_uploader(
+            "Upload QR Code",
+            type=["png","jpg","jpeg"]
+        )
+
+        if uploaded:
+
+            image = Image.open(uploaded)
+            st.image(image, width=300)
+
+            decoded = decode(image)
+
+            if decoded:
+
+                qr = decoded[0].data.decode()
+                st.success("QR Decoded Successfully")
+                st.code(qr)
+
+                risk = 20
+                reasons = []
+
+                suspicious_patterns = {
+                    "bit.ly":25,
+                    "tinyurl":20,
+                    "goo.gl":20,
+                    "rb.gy":20,
+                    "cutt.ly":20,
+                    "t.co":20,
+                    "pay":15,
+                    "wallet":10,
+                    "upi":10
+                }
+
+                for keyword, pts in suspicious_patterns.items():
+                    if keyword in qr.lower():
+                        risk += pts
+                        reasons.append(f"Detected '{keyword}'")
+                        break
+
+                risk = min(risk,100)
+                st.session_state.qr_score = risk
+
+                st.progress(risk)
+
+                st.markdown("### 🔍 QR Analysis")
+
+                if reasons:
+                    for reason in reasons:
+                        st.write("✔", reason)
+                else:
+                    st.write("✔ No suspicious indicators found.")
+
+                if risk > 60:
+                    st.error("🚨 Suspicious QR Code")
+                elif risk > 30:
+                    st.warning("⚠ Medium Risk")
+                else:
+                    st.success("✅ QR appears Safe")
+
+            else:
+                st.warning("No QR code detected.")
+
+    with tab4:
+
+        st.subheader("📊 Overall Fraud Assessment")
+
+        overall = max(
+            st.session_state.website_score,
+            st.session_state.message_score,
+            st.session_state.qr_score
+        )
+
+        gauge = go.Figure(
+            go.Indicator(
+                mode="gauge+number",
+                value=overall,
+                title={"text":"Overall Fraud Risk"},
+                gauge={
+                    "axis":{"range":[0,100]},
+                    "bar":{"color":"darkred"},
+                    "steps":[
+                        {"range":[0,30],"color":"green"},
+                        {"range":[30,60],"color":"yellow"},
+                        {"range":[60,100],"color":"red"}
+                    ]
+                }
+            )
+        )
+
+        st.plotly_chart(gauge, use_container_width=True)
+
+        c1,c2,c3 = st.columns(3)
+        c1.metric("🌐 Website", f"{st.session_state.website_score}%")
+        c2.metric("📩 Message", f"{st.session_state.message_score}%")
+        c3.metric("📷 QR", f"{st.session_state.qr_score}%")
+
+        st.markdown("---")
+
+        if overall >= 70:
+            st.error("🚨 HIGH RISK")
+            explanation = "Multiple high-risk indicators detected. Avoid interacting with the submitted content."
+        elif overall >= 40:
+            st.warning("⚠ MEDIUM RISK")
+            explanation = "Some suspicious indicators were detected. Exercise caution before proceeding."
         else:
-            st.error("❌ Failed to add report — check server permissions.")
+            st.success("✅ LOW RISK")
+            explanation = "No major fraud indicators detected."
 
-    # show leaderboard from session_state or file
-    if os.path.exists(REPORTS_PATH):
-        try:
-            reports_df = pd.read_csv(REPORTS_PATH)
-            top_states = reports_df["ts"].dt.date.value_counts().head(5) if "ts" in reports_df.columns else None
-            st.subheader("🏆 Recent Reports")
-            st.dataframe(reports_df.tail(10))
-        except Exception:
-            st.info("No reports available yet.")
+        st.markdown("### 🤖 AI Explanation")
+        st.info(explanation)
 
-    # Quiz & engagement
-    scam_quiz()
+        st.markdown("### 🛡 Recommended Actions")
+        st.write("✔ Do not click suspicious links")
+        st.write("✔ Verify the sender or website")
+        st.write("✔ Report scams to the National Cyber Crime Portal")
+        st.write("✔ Block suspicious contacts")
+        st.write("✔ Never share OTPs or banking credentials")
 
 # -------------------- REPORT --------------------
 elif selected == "📈 Reports":
@@ -731,3 +934,37 @@ elif selected == "📈 Reports":
         download_report_files(df_all)
     except Exception:
         st.info("No trades available for export.")
+                
+    st.subheader("📚 Knowledge Hub")
+
+    with st.expander("Investment Fraud"):
+        st.write("""
+    • Never trust guaranteed returns.
+    
+    • Verify SEBI registration.
+    
+    • Research before investing.
+    """)
+    
+    with st.expander("QR Fraud"):
+        st.write("""
+    Fake payment QR codes
+    can redirect money
+    to fraudsters.
+    """)
+    
+    with st.expander("Phishing"):
+        st.write("""
+    Never share OTPs.
+    
+    Always verify domains.
+    
+    Beware of urgency.
+    """)
+    
+    with st.expander("Emergency Help"):
+        st.write("""
+    📞 Cyber Helpline: 1930
+    
+    🌐 https://cybercrime.gov.in
+    """)
